@@ -58,12 +58,15 @@ def handle_command(message):
     bot.reply_to(message, response)
 
 # Webhook for Telegram (Now Handled by Heroku)
-@server.route(f"/{TELEGRAM_BOT_TOKEN}", methods=["POST"])
-def get_message():
-    json_str = request.get_data().decode("UTF-8")
-    update = telebot.types.Update.de_json(json_str)
-    bot.process_new_updates([update])
-    return "", 200
+@server.route("/set_webhook", methods=["GET", "POST"])
+def set_webhook():
+    heroku_app_name = os.getenv("HEROKU_APP_NAME")  # Get Heroku App Name from Config
+    if not heroku_app_name:
+        return "❌ HEROKU_APP_NAME not set. Please configure it in Heroku."
+    
+    webhook_url = f"https://{heroku_app_name}.herokuapp.com/{TELEGRAM_BOT_TOKEN}"
+    success = bot.set_webhook(url=webhook_url)
+    return "✅ Webhook set successfully!" if success else "❌ Webhook setup failed."
 
 # Start Flask Server
 if __name__ == "__main__":
